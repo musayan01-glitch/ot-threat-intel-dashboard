@@ -1,0 +1,6 @@
+value,type,tag,source
+1.1.1.1,IP,Suspicious,Manual
+8.8.8.8,IP,Suspicious,Manual
+example.com,Domain,Suspicious,Manual
+http://example.com/,URL,Suspicious,Manual
+44d88612fea8a8f36de82e1278abb02f,Hash,Malware,Manual

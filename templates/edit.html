@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit IOC</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #111;
+            color: white;
+            padding: 30px;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Edit IOC</h2>
+
+<form method="POST">
+    <input type="text" name="value" value="{{ ioc.value }}" required>
+
+    <select name="type">
+        <option value="IP" {% if ioc.type=="IP" %}selected{% endif %}>IP</option>
+        <option value="Domain" {% if ioc.type=="Domain" %}selected{% endif %}>Domain</option>
+        <option value="Hash" {% if ioc.type=="Hash" %}selected{% endif %}>Hash</option>
+        <option value="URL" {% if ioc.type=="URL" %}selected{% endif %}>URL</option>
+    </select>
+
+    <select name="tag">
+        <option value="Malware" {% if ioc.tag=="Malware" %}selected{% endif %}>Malware</option>
+        <option value="Phishing" {% if ioc.tag=="Phishing" %}selected{% endif %}>Phishing</option>
+        <option value="C2" {% if ioc.tag=="C2" %}selected{% endif %}>C2</option>
+        <option value="Suspicious" {% if ioc.tag=="Suspicious" %}selected{% endif %}>Suspicious</option>
+        <option value="Benign" {% if ioc.tag=="Benign" %}selected{% endif %}>Benign</option>
+    </select>
+
+    <input type="text" name="source" value="{{ ioc.source }}" required>
+
+    <button type="submit">Update IOC</button>
+</form>
+
+<a href="/" style="color: yellow;">Back to Dashboard</a>
+
+</body>
+</html>
