@@ -63,8 +63,6 @@ class IOC(db.Model):
             "vt_harmless": self.vt_harmless,
             "vt_undetected": self.vt_undetected,
             "vt_last_analysis_date": self.vt_last_analysis_date,
-        
-
             "abuse_status": self.abuse_status,
             "abuse_confidence_score": self.abuse_confidence_score,
             "abuse_country": self.abuse_country,
@@ -73,7 +71,8 @@ class IOC(db.Model):
             "abuse_usage_type": self.abuse_usage_type,
             "abuse_total_reports": self.abuse_total_reports,
             "abuse_last_reported_at": self.abuse_last_reported_at,
-}
+        }
+
 
 with app.app_context():
     db.create_all()
@@ -87,9 +86,6 @@ def vt_headers():
 
 
 def encode_url_for_vt(url_value: str) -> str:
-    """
-    VirusTotal URL lookups use a URL-safe base64 identifier without '=' padding.
-    """
     encoded = base64.urlsafe_b64encode(url_value.encode()).decode()
     return encoded.strip("=")
 
@@ -111,14 +107,10 @@ def get_vt_endpoint(ioc_type: str, ioc_value: str):
 
 
 def auto_tag_ioc(ioc: IOC):
-    """
-    Update IOC tag automatically based on VirusTotal results.
-    """
     malicious = ioc.vt_malicious or 0
     suspicious = ioc.vt_suspicious or 0
     harmless = ioc.vt_harmless or 0
 
-    # Simple tagging logic
     if malicious >= 5:
         ioc.tag = "Malware"
     elif malicious >= 1:
@@ -174,13 +166,10 @@ def enrich_ioc_with_vt(ioc: IOC):
 
         elif response.status_code == 404:
             ioc.vt_status = "Not found in VT"
-
         elif response.status_code == 401:
             ioc.vt_status = "Invalid API key"
-
         elif response.status_code == 429:
             ioc.vt_status = "Rate limit hit"
-
         else:
             ioc.vt_status = f"VT error {response.status_code}"
 
@@ -188,6 +177,7 @@ def enrich_ioc_with_vt(ioc: IOC):
         ioc.vt_status = "Request failed"
 
     db.session.commit()
+
 
 def abuseipdb_headers():
     return {
@@ -249,13 +239,10 @@ def enrich_ioc_with_abuseipdb(ioc: IOC):
 
         elif response.status_code == 401:
             ioc.abuse_status = "Invalid API key"
-
         elif response.status_code == 422:
             ioc.abuse_status = "Invalid IP format"
-
         elif response.status_code == 429:
             ioc.abuse_status = "Rate limit hit"
-
         else:
             ioc.abuse_status = f"AbuseIPDB error {response.status_code}"
 
@@ -263,6 +250,7 @@ def enrich_ioc_with_abuseipdb(ioc: IOC):
         ioc.abuse_status = "Request failed"
 
     db.session.commit()
+
 
 @app.route("/")
 def dashboard():
@@ -283,13 +271,38 @@ def dashboard():
         query = query.filter(IOC.tag == filter_tag)
 
     if filter_source:
-        query = query.filter(IOC.source == filter_source)
+        query = query.filter(IOC.source.ilike(f"%{filter_source}%"))
 
     iocs = query.order_by(IOC.id.desc()).all()
+
+    total_iocs = len(iocs)
+
+    tag_counts = {
+        "Malware": 0,
+        "Suspicious": 0,
+        "C2": 0,
+        "Benign": 0
+    }
+
+    type_counts = {
+        "IP": 0,
+        "Domain": 0,
+        "URL": 0,
+        "Hash": 0
+    }
+
+    for ioc in iocs:
+        if ioc.tag in tag_counts:
+            tag_counts[ioc.tag] += 1
+        if ioc.type in type_counts:
+            type_counts[ioc.type] += 1
 
     return render_template(
         "index.html",
         iocs=iocs,
+        total_iocs=total_iocs,
+        tag_counts=tag_counts,
+        type_counts=type_counts,
         search=search,
         filter_type=filter_type,
         filter_tag=filter_tag,
@@ -312,7 +325,6 @@ def add_ioc():
     db.session.add(new_ioc)
     db.session.commit()
 
-    # Automatic enrichment pipeline
     enrich_ioc_with_vt(new_ioc)
 
     if new_ioc.type.lower() == "ip":
@@ -333,11 +345,13 @@ def get_iocs():
     iocs = IOC.query.order_by(IOC.id.desc()).all()
     return jsonify([ioc.to_dict() for ioc in iocs])
 
+
 @app.route("/enrich_abuse/<int:ioc_id>", methods=["POST"])
 def enrich_abuse(ioc_id):
     ioc = IOC.query.get_or_404(ioc_id)
     enrich_ioc_with_abuseipdb(ioc)
     return redirect(url_for("dashboard"))
+
 
 @app.route("/delete_ioc/<int:ioc_id>", methods=["POST"])
 def delete_ioc(ioc_id):
@@ -345,6 +359,7 @@ def delete_ioc(ioc_id):
     db.session.delete(ioc)
     db.session.commit()
     return redirect(url_for("dashboard"))
+
 
 @app.route("/edit_ioc/<int:ioc_id>", methods=["GET", "POST"])
 def edit_ioc(ioc_id):
@@ -360,6 +375,7 @@ def edit_ioc(ioc_id):
         return redirect(url_for("dashboard"))
 
     return render_template("edit.html", ioc=ioc)
+
 
 @app.route("/bulk_upload", methods=["POST"])
 def bulk_upload():
@@ -392,7 +408,6 @@ def bulk_upload():
             db.session.add(new_ioc)
             db.session.commit()
 
-            # Automatic enrichment pipeline
             enrich_ioc_with_vt(new_ioc)
 
             if new_ioc.type.lower() == "ip":
@@ -405,4 +420,4 @@ def bulk_upload():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

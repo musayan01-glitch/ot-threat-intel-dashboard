@@ -1,62 +1,81 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title>OT Threat Intelligence Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            background: #f4f6f8;
-        }
-        h1 {
-            color: #222;
-        }
-        form {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        input, select, button {
-            padding: 10px;
-            margin: 5px;
-        }
-        table {
-            width: 100%;
-            background: white;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-            vertical-align: top;
-        }
-        th {
-            background: #e9ecef;
-        }
-        .small-btn {
-            padding: 6px 10px;
-            font-size: 12px;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+```
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+        background: #0b0b0b;
+        color: #ffffff;
+    }
+
+    h1 {
+        color: #ffffff;
+    }
+
+    form {
+        margin-bottom: 20px;
+    }
+
+    input, select, button {
+        padding: 10px;
+        margin: 5px;
+        background: #000;
+        color: #fff;
+        border: 1px solid yellow;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    th, td {
+        border: 1px solid #888;
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    th {
+        background: #111;
+    }
+
+    .small-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        margin: 2px;
+    }
+</style>
+```
+
 </head>
+
 <body>
-    <h1>OT Threat Intelligence Dashboard</h1>
 
-    <form method="POST" action="/add_ioc">
-        <input type="text" name="value" placeholder="IOC Value (IP, Domain, Hash, URL)" required>
+<h1>OT Threat Intelligence Dashboard</h1>
 
-        <select name="type" required>
-            <option value="">Select IOC Type</option>
-            <option value="IP">IP</option>
-            <option value="Domain">Domain</option>
-            <option value="Hash">Hash</option>
-            <option value="URL">URL</option>
-        </select>
+<!-- ADD IOC -->
 
-       <select name="tag" required>
+<form method="POST" action="/add_ioc">
+    <input type="text" name="value" placeholder="IOC Value (IP, Domain, Hash, URL)" required>
+
+```
+<select name="type" required>
+    <option value="">Select IOC Type</option>
+    <option value="IP">IP</option>
+    <option value="Domain">Domain</option>
+    <option value="Hash">Hash</option>
+    <option value="URL">URL</option>
+</select>
+
+<select name="tag" required>
     <option value="">Select Tag</option>
     <option value="Malware">Malware</option>
     <option value="Phishing">Phishing</option>
@@ -65,106 +84,176 @@
     <option value="Benign">Benign</option>
 </select>
 
-        <input type="text" name="source" placeholder="Source (Manual / VT / AbuseIPDB)" required>
-        <button type="submit">Add IOC</button>
-    </form>
+<input type="text" name="source" placeholder="Source (Manual / VT / AbuseIPDB)" required>
 
-<form method="POST" action="/bulk_upload" enctype="multipart/form-data" style="margin-top: 20px;">
+<button type="submit">Add IOC</button>
+```
+
+</form>
+
+<!-- BULK UPLOAD -->
+
+<form method="POST" action="/bulk_upload" enctype="multipart/form-data">
     <input type="file" name="file" accept=".csv" required>
     <button type="submit">Upload CSV</button>
 </form>
 
-    <form method="GET" action="/" style="margin-top: 20px;">
-    <input type="text" name="search" placeholder="Search IOC value"
-           value="{{ search or '' }}">
+<!-- FILTER -->
 
-    <select name="type">
-        <option value="">All Types</option>
-        <option value="IP" {% if filter_type == "IP" %}selected{% endif %}>IP</option>
-        <option value="Domain" {% if filter_type == "Domain" %}selected{% endif %}>Domain</option>
-        <option value="Hash" {% if filter_type == "Hash" %}selected{% endif %}>Hash</option>
-        <option value="URL" {% if filter_type == "URL" %}selected{% endif %}>URL</option>
-    </select>
+<form method="GET" action="/">
+    <input type="text" name="search" placeholder="Search IOC value" value="{{ search or '' }}">
 
-    <select name="tag">
-        <option value="">All Tags</option>
-        <option value="Malware" {% if filter_tag == "Malware" %}selected{% endif %}>Malware</option>
-        <option value="Phishing" {% if filter_tag == "Phishing" %}selected{% endif %}>Phishing</option>
-        <option value="C2" {% if filter_tag == "C2" %}selected{% endif %}>C2</option>
-        <option value="Suspicious" {% if filter_tag == "Suspicious" %}selected{% endif %}>Suspicious</option>
-        <option value="Benign" {% if filter_tag == "Benign" %}selected{% endif %}>Benign</option>
-    </select>
+```
+<select name="type">
+    <option value="">All Types</option>
+    <option value="IP" {% if filter_type == "IP" %}selected{% endif %}>IP</option>
+    <option value="Domain" {% if filter_type == "Domain" %}selected{% endif %}>Domain</option>
+    <option value="Hash" {% if filter_type == "Hash" %}selected{% endif %}>Hash</option>
+    <option value="URL" {% if filter_type == "URL" %}selected{% endif %}>URL</option>
+</select>
 
-    <select name="source">
-        <option value="">All Sources</option>
-        <option value="Manual" {% if filter_source == "Manual" %}selected{% endif %}>Manual</option>
-        <option value="VT" {% if filter_source == "VT" %}selected{% endif %}>VT</option>
-        <option value="AbuseIPDB" {% if filter_source == "AbuseIPDB" %}selected{% endif %}>AbuseIPDB</option>
-    </select>
+<select name="tag">
+    <option value="">All Tags</option>
+    <option value="Malware" {% if filter_tag == "Malware" %}selected{% endif %}>Malware</option>
+    <option value="Phishing" {% if filter_tag == "Phishing" %}selected{% endif %}>Phishing</option>
+    <option value="C2" {% if filter_tag == "C2" %}selected{% endif %}>C2</option>
+    <option value="Suspicious" {% if filter_tag == "Suspicious" %}selected{% endif %}>Suspicious</option>
+    <option value="Benign" {% if filter_tag == "Benign" %}selected{% endif %}>Benign</option>
+</select>
 
-    <button type="submit">Apply Filter</button>
-    <a href="/" style="margin-left: 10px; color: #ff0;">Reset</a>
+<select name="source">
+    <option value="">All Sources</option>
+    <option value="Manual" {% if filter_source == "Manual" %}selected{% endif %}>Manual</option>
+    <option value="VT" {% if filter_source == "VT" %}selected{% endif %}>VT</option>
+    <option value="AbuseIPDB" {% if filter_source == "AbuseIPDB" %}selected{% endif %}>AbuseIPDB</option>
+</select>
+
+<button type="submit">Apply Filter</button>
+```
+
 </form>
 
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>IOC Value</th>
-            <th>Type</th>
-            <th>Tag</th>
-            <th>Source</th>
-            <th>Timestamp</th>
-            <th>VT Status</th>
-            <th>VT Stats</th>
-            <th>AbuseIPDB</th>
-            <th>Action</th>
-        </tr>
+<!-- METRICS -->
 
-        {% for ioc in iocs %}
-        <tr>
-            <td>{{ ioc.id }}</td>
-            <td>{{ ioc.value }}</td>
-            <td>{{ ioc.type }}</td>
-            <td>{{ ioc.tag }}</td>
-            <td>{{ ioc.source }}</td>
-            <td>{{ ioc.timestamp }}</td>
-            <td>{{ ioc.vt_status or "Not enriched" }}</td>
+<div style="display:flex; gap:20px; margin:20px 0; flex-wrap:wrap;">
+    <div>Total IOCs: <b>{{ total_iocs }}</b></div>
+    <div>Malware: <b>{{ tag_counts['Malware'] }}</b></div>
+    <div>Suspicious: <b>{{ tag_counts['Suspicious'] }}</b></div>
+    <div>C2: <b>{{ tag_counts['C2'] }}</b></div>
+    <div>Benign: <b>{{ tag_counts['Benign'] }}</b></div>
+</div>
+
+<!-- CHARTS -->
+
+<div style="display:flex; gap:40px; flex-wrap:wrap;">
+    <div>
+        <h3>Tag Distribution</h3>
+        <canvas id="tagChart" width="300" height="300"></canvas>
+    </div>
+
+```
+<div>
+    <h3>IOC Type Distribution</h3>
+    <canvas id="typeChart" width="300" height="300"></canvas>
+</div>
+```
+
+</div>
+
+<!-- TABLE -->
+
+<table>
+<tr>
+    <th>ID</th>
+    <th>IOC Value</th>
+    <th>Type</th>
+    <th>Tag</th>
+    <th>Source</th>
+    <th>Timestamp</th>
+    <th>VT Status</th>
+    <th>VT Stats</th>
+    <th>AbuseIPDB</th>
+    <th>Action</th>
+</tr>
+
+{% for ioc in iocs %}
+
+<tr>
+<td>{{ ioc.id }}</td>
+<td>{{ ioc.value }}</td>
+<td>{{ ioc.type }}</td>
+<td>{{ ioc.tag }}</td>
+<td>{{ ioc.source }}</td>
+<td>{{ ioc.timestamp }}</td>
+<td>{{ ioc.vt_status or "Not enriched" }}</td>
+
 <td>
-    Malicious: {{ ioc.vt_malicious if ioc.vt_malicious is not none else "-" }}<br>
-    Suspicious: {{ ioc.vt_suspicious if ioc.vt_suspicious is not none else "-" }}<br>
-    Harmless: {{ ioc.vt_harmless if ioc.vt_harmless is not none else "-" }}<br>
-    Undetected: {{ ioc.vt_undetected if ioc.vt_undetected is not none else "-" }}<br>
-    Last Analysis: {{ ioc.vt_last_analysis_date or "-" }}
+Malicious: {{ ioc.vt_malicious or "-" }}<br>
+Suspicious: {{ ioc.vt_suspicious or "-" }}<br>
+Harmless: {{ ioc.vt_harmless or "-" }}<br>
+Undetected: {{ ioc.vt_undetected or "-" }}<br>
+Last: {{ ioc.vt_last_analysis_date or "-" }}
 </td>
+
 <td>
-    Status: {{ ioc.abuse_status or "Not enriched" }}<br>
-    Score: {{ ioc.abuse_confidence_score if ioc.abuse_confidence_score is not none else "-" }}<br>
-    Country: {{ ioc.abuse_country or "-" }}<br>
-    ISP: {{ ioc.abuse_isp or "-" }}<br>
-    Domain: {{ ioc.abuse_domain or "-" }}<br>
-    Usage: {{ ioc.abuse_usage_type or "-" }}<br>
-    Reports: {{ ioc.abuse_total_reports if ioc.abuse_total_reports is not none else "-" }}<br>
-    Last Reported: {{ ioc.abuse_last_reported_at or "-" }}
+Status: {{ ioc.abuse_status or "Not enriched" }}<br>
+Score: {{ ioc.abuse_confidence_score or "-" }}<br>
+Country: {{ ioc.abuse_country or "-" }}<br>
+ISP: {{ ioc.abuse_isp or "-" }}
 </td>
+
 <td>
-    <form method="POST" action="/enrich_vt/{{ ioc.id }}" style="margin-bottom: 5px;">
-        <button class="small-btn" type="submit">Recheck with VT</button>
-    </form>
+<form method="POST" action="/enrich_vt/{{ ioc.id }}">
+<button class="small-btn">Recheck VT</button>
+</form>
 
-    <form method="POST" action="/enrich_abuse/{{ ioc.id }}">
-        <button class="small-btn" type="submit">Recheck AbuseIPDB</button>
-    </form>
+<form method="POST" action="/enrich_abuse/{{ ioc.id }}">
+<button class="small-btn">Recheck AbuseIPDB</button>
+</form>
 
- <a href="/edit_ioc/{{ ioc.id }}">
-        <button class="small-btn">Edit</button>
-    </a>
+<a href="/edit_ioc/{{ ioc.id }}"><button class="small-btn">Edit</button></a>
 
-    <form method="POST" action="/delete_ioc/{{ ioc.id }}" 
-          onsubmit="return confirm('Are you sure you want to delete this IOC?');">
-        <button class="small-btn" style="background:red; color:white;">Delete</button>
-    </form>
+<form method="POST" action="/delete_ioc/{{ ioc.id }}">
+<button class="small-btn" style="background:red;">Delete</button>
+</form>
 </td>
-        {% endfor %}
-    </table>
+</tr>
+{% endfor %}
+</table>
+
+<!-- CHART SCRIPT -->
+
+<script>
+new Chart(document.getElementById("tagChart"), {
+    type: "pie",
+    data: {
+        labels: ["Malware", "Suspicious", "C2", "Benign"],
+        datasets: [{
+            data: [
+                {{ tag_counts['Malware'] }},
+                {{ tag_counts['Suspicious'] }},
+                {{ tag_counts['C2'] }},
+                {{ tag_counts['Benign'] }}
+            ]
+        }]
+    }
+});
+
+new Chart(document.getElementById("typeChart"), {
+    type: "bar",
+    data: {
+        labels: ["IP", "Domain", "URL", "Hash"],
+        datasets: [{
+            data: [
+                {{ type_counts['IP'] }},
+                {{ type_counts['Domain'] }},
+                {{ type_counts['URL'] }},
+                {{ type_counts['Hash'] }}
+            ]
+        }]
+    }
+});
+</script>
+
 </body>
 </html>
