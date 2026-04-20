@@ -4,7 +4,9 @@ import requests
 import csv
 import io
 import re
+import feedparser
 
+from html import unescape
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -24,7 +26,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change-this-secret-key")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ioc_data.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///ioc_data.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -39,6 +41,16 @@ ABUSEIPDB_API_KEY = os.getenv("ABUSEIPDB_API_KEY")
 
 DEFAULT_ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123!")
+
+CISA_ICS_RSS_URL = "https://www.cisa.gov/cybersecurity-advisories/ics-advisories.xml"
+
+OT_VENDOR_KEYWORDS = [
+    "siemens", "schneider", "rockwell", "allen-bradley", "abb", "honeywell",
+    "emerson", "mitsubishi", "yokogawa", "omron", "ge", "hitachi",
+    "bently nevada", "wago", "phoenix contact", "advantech",
+    "ics", "scada", "plc", "rtu", "dcs", "hmi",
+    "industrial control", "operational technology"
+]
 
 NETWORK_ZONES = [
     "Corporate IT",
@@ -218,6 +230,59 @@ def validate_ioc_form(value, ioc_type, tag, source, network_zone):
         return f"Invalid IOC value for type {ioc_type}."
 
     return None
+
+
+def advisory_is_ot_relevant(entry) -> bool:
+    text_blob = " ".join([
+        entry.get("title", ""),
+        entry.get("summary", ""),
+        entry.get("description", "")
+    ]).lower()
+
+    return any(keyword in text_blob for keyword in OT_VENDOR_KEYWORDS)
+
+
+def normalize_cisa_entry(entry: dict) -> dict:
+    published = entry.get("published", "") or entry.get("updated", "")
+    summary = unescape(entry.get("summary", "") or entry.get("description", ""))
+
+    if len(summary) > 300:
+        summary = summary[:300].rstrip() + "..."
+
+    severity = "Advisory"
+    title_lower = entry.get("title", "").lower()
+    if "critical" in title_lower:
+        severity = "Critical"
+    elif "high" in title_lower:
+        severity = "High"
+
+    return {
+        "title": entry.get("title", "Untitled Advisory"),
+        "link": entry.get("link", "#"),
+        "published": published,
+        "summary": summary,
+        "severity": severity,
+    }
+
+
+def fetch_cisa_ics_advisories(limit: int = 8):
+    try:
+        feed = feedparser.parse(CISA_ICS_RSS_URL)
+
+        if getattr(feed, "bozo", 0):
+            return [], f"RSS parse warning: {getattr(feed, 'bozo_exception', 'unknown issue')}"
+
+        entries = feed.entries if hasattr(feed, "entries") else []
+        ot_entries = [e for e in entries if advisory_is_ot_relevant(e)]
+
+        if not ot_entries:
+            ot_entries = entries
+
+        advisories = [normalize_cisa_entry(e) for e in ot_entries[:limit]]
+        return advisories, None
+
+    except Exception as e:
+        return [], f"Failed to load CISA ICS feed: {str(e)}"
 
 
 with app.app_context():
@@ -481,6 +546,8 @@ def dashboard():
         if zone in zone_counts:
             zone_counts[zone] += 1
 
+    cisa_advisories, cisa_feed_error = fetch_cisa_ics_advisories(limit=8)
+
     return render_template(
         "index.html",
         iocs=iocs,
@@ -495,6 +562,8 @@ def dashboard():
         filter_source=filter_source,
         filter_zone=filter_zone,
         current_user=current_user,
+        cisa_advisories=cisa_advisories,
+        cisa_feed_error=cisa_feed_error,
     )
 
 
