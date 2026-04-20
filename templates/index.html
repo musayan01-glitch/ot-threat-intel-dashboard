@@ -1,258 +1,508 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
-    <title>OT Threat Intelligence Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OT Threat Intelligence Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Base ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+    a { color: #58a6ff; text-decoration: none; }
 
-```
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 30px;
-        background: #0b0b0b;
-        color: #ffffff;
+    /* ── Header ── */
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 14px 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    header h1 { font-size: 1.2rem; color: #f0f6fc; font-weight: 600; }
+    header .subtitle { font-size: 0.78rem; color: #8b949e; }
+
+    /* ── Layout ── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+
+    /* ── Stat Cards ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .stat-card .label { font-size: 0.72rem; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; }
+    .stat-card .value { font-size: 1.6rem; font-weight: 700; color: #f0f6fc; margin-top: 4px; }
+
+    /* ── Charts ── */
+    .charts-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px; margin-bottom: 20px;
+    }
+    .chart-card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px;
+    }
+    .chart-card h3 { font-size: 0.82rem; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+    .chart-card canvas { max-height: 180px; }
+
+    /* ── Filters ── */
+    .filters {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 14px 16px; margin-bottom: 16px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+    }
+    .filters label { font-size: 0.75rem; color: #8b949e; display: block; margin-bottom: 4px; }
+    .filters input, .filters select {
+      background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
+      border-radius: 6px; padding: 6px 10px; font-size: 0.83rem;
+    }
+    .filters input:focus, .filters select:focus { outline: none; border-color: #58a6ff; }
+    .btn {
+      padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 0.83rem; font-weight: 500; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #238636; color: #fff; }
+    .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+    .btn-sm { padding: 4px 10px; font-size: 0.76rem; }
+    .btn-danger { background: #da3633; color: #fff; }
+    .btn-info { background: #1f6feb; color: #fff; }
+
+    /* ── Add IOC Form ── */
+    .add-form {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 16px; margin-bottom: 16px;
+    }
+    .add-form h3 { font-size: 0.85rem; color: #f0f6fc; margin-bottom: 12px; }
+    .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-size: 0.73rem; color: #8b949e; margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
+      border-radius: 6px; padding: 6px 10px; font-size: 0.83rem; min-width: 140px;
     }
 
-    h1 {
-        color: #ffffff;
+    /* ── Bulk Upload ── */
+    .bulk-section {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 14px 16px; margin-bottom: 16px;
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
     }
+    .bulk-section label { font-size: 0.8rem; color: #8b949e; }
+    .bulk-section input[type=file] { font-size: 0.8rem; color: #c9d1d9; }
 
-    form {
-        margin-bottom: 20px;
-    }
-
-    input, select, button {
-        padding: 10px;
-        margin: 5px;
-        background: #000;
-        color: #fff;
-        border: 1px solid yellow;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-
-    th, td {
-        border: 1px solid #888;
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
-    }
-
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
     th {
-        background: #111;
+      background: #161b22; color: #8b949e; text-align: left;
+      padding: 10px 12px; border-bottom: 1px solid #30363d;
+      text-transform: uppercase; font-size: 0.72rem; letter-spacing: .4px; white-space: nowrap;
     }
+    td { padding: 9px 12px; border-bottom: 1px solid #21262d; vertical-align: top; }
+    tr:hover td { background: #161b22; }
+    .ioc-value { font-family: monospace; font-size: 0.82rem; color: #79c0ff; word-break: break-all; max-width: 200px; }
 
-    .small-btn {
-        padding: 6px 10px;
-        font-size: 12px;
-        margin: 2px;
+    /* ── Tag Badges ── */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 0.72rem; font-weight: 600; white-space: nowrap;
     }
-</style>
-```
+    .badge-malware   { background: #4d1818; color: #ff7b72; border: 1px solid #ff7b72; }
+    .badge-suspicious{ background: #2d2208; color: #e3b341; border: 1px solid #e3b341; }
+    .badge-c2        { background: #1a1040; color: #bc8cff; border: 1px solid #bc8cff; }
+    .badge-benign    { background: #0d2d14; color: #56d364; border: 1px solid #56d364; }
 
+    /* ── Network Zone Badges (Purdue Model colours) ── */
+    .zone-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 0.7rem; font-weight: 600; white-space: nowrap;
+    }
+    .zone-corporate-it  { background: #1c2a3a; color: #58a6ff; border: 1px solid #1f6feb; }
+    .zone-dmz           { background: #2a2010; color: #e3b341; border: 1px solid #9e6a03; }
+    .zone-ot-level-2    { background: #2a1a00; color: #ffa657; border: 1px solid #d1640a; }
+    .zone-ot-level-1    { background: #3a1200; color: #ff8c69; border: 1px solid #c7401f; }
+    .zone-field-device  { background: #4d1818; color: #ff7b72; border: 1px solid #da3633; }
+
+    /* ── Enrichment Scores ── */
+    .score-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .score-pill {
+      font-size: 0.7rem; padding: 1px 7px; border-radius: 10px;
+      border: 1px solid #30363d; color: #8b949e;
+    }
+    .score-pill.red   { color: #ff7b72; border-color: #ff7b72; }
+    .score-pill.green { color: #56d364; border-color: #56d364; }
+    .score-pill.yellow{ color: #e3b341; border-color: #e3b341; }
+
+    /* ── Actions ── */
+    .actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+    /* ── Purdue Diagram Legend ── */
+    .purdue-legend {
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 14px 16px; margin-bottom: 16px;
+    }
+    .purdue-legend h3 { font-size: 0.82rem; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    .purdue-levels { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .purdue-level {
+      padding: 5px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .purdue-arrow { color: #30363d; font-size: 1.1rem; }
+  </style>
 </head>
-
 <body>
 
-<h1>OT Threat Intelligence Dashboard</h1>
+<header>
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f78166" stroke-width="2">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+  <div>
+    <h1>OT Threat Intelligence Dashboard</h1>
+    <div class="subtitle">SOC-style IOC management with Purdue Model zone awareness</div>
+  </div>
+</header>
 
-<!-- ADD IOC -->
+<div class="container">
 
-<form method="POST" action="/add_ioc">
-    <input type="text" name="value" placeholder="IOC Value (IP, Domain, Hash, URL)" required>
-
-```
-<select name="type" required>
-    <option value="">Select IOC Type</option>
-    <option value="IP">IP</option>
-    <option value="Domain">Domain</option>
-    <option value="Hash">Hash</option>
-    <option value="URL">URL</option>
-</select>
-
-<select name="tag" required>
-    <option value="">Select Tag</option>
-    <option value="Malware">Malware</option>
-    <option value="Phishing">Phishing</option>
-    <option value="C2">C2</option>
-    <option value="Suspicious">Suspicious</option>
-    <option value="Benign">Benign</option>
-</select>
-
-<input type="text" name="source" placeholder="Source (Manual / VT / AbuseIPDB)" required>
-
-<button type="submit">Add IOC</button>
-```
-
-</form>
-
-<!-- BULK UPLOAD -->
-
-<form method="POST" action="/bulk_upload" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".csv" required>
-    <button type="submit">Upload CSV</button>
-</form>
-
-<!-- FILTER -->
-
-<form method="GET" action="/">
-    <input type="text" name="search" placeholder="Search IOC value" value="{{ search or '' }}">
-
-```
-<select name="type">
-    <option value="">All Types</option>
-    <option value="IP" {% if filter_type == "IP" %}selected{% endif %}>IP</option>
-    <option value="Domain" {% if filter_type == "Domain" %}selected{% endif %}>Domain</option>
-    <option value="Hash" {% if filter_type == "Hash" %}selected{% endif %}>Hash</option>
-    <option value="URL" {% if filter_type == "URL" %}selected{% endif %}>URL</option>
-</select>
-
-<select name="tag">
-    <option value="">All Tags</option>
-    <option value="Malware" {% if filter_tag == "Malware" %}selected{% endif %}>Malware</option>
-    <option value="Phishing" {% if filter_tag == "Phishing" %}selected{% endif %}>Phishing</option>
-    <option value="C2" {% if filter_tag == "C2" %}selected{% endif %}>C2</option>
-    <option value="Suspicious" {% if filter_tag == "Suspicious" %}selected{% endif %}>Suspicious</option>
-    <option value="Benign" {% if filter_tag == "Benign" %}selected{% endif %}>Benign</option>
-</select>
-
-<select name="source">
-    <option value="">All Sources</option>
-    <option value="Manual" {% if filter_source == "Manual" %}selected{% endif %}>Manual</option>
-    <option value="VT" {% if filter_source == "VT" %}selected{% endif %}>VT</option>
-    <option value="AbuseIPDB" {% if filter_source == "AbuseIPDB" %}selected{% endif %}>AbuseIPDB</option>
-</select>
-
-<button type="submit">Apply Filter</button>
-```
-
-</form>
-
-<!-- METRICS -->
-
-<div style="display:flex; gap:20px; margin:20px 0; flex-wrap:wrap;">
-    <div>Total IOCs: <b>{{ total_iocs }}</b></div>
-    <div>Malware: <b>{{ tag_counts['Malware'] }}</b></div>
-    <div>Suspicious: <b>{{ tag_counts['Suspicious'] }}</b></div>
-    <div>C2: <b>{{ tag_counts['C2'] }}</b></div>
-    <div>Benign: <b>{{ tag_counts['Benign'] }}</b></div>
-</div>
-
-<!-- CHARTS -->
-
-<div style="display:flex; gap:40px; flex-wrap:wrap;">
-    <div>
-        <h3>Tag Distribution</h3>
-        <canvas id="tagChart" width="300" height="300"></canvas>
+  <!-- Purdue Model Legend -->
+  <div class="purdue-legend">
+    <h3>Purdue Model — Network Zone Context</h3>
+    <div class="purdue-levels">
+      <span class="purdue-level zone-corporate-it">Corporate IT</span>
+      <span class="purdue-arrow">→</span>
+      <span class="purdue-level zone-dmz">DMZ</span>
+      <span class="purdue-arrow">→</span>
+      <span class="purdue-level zone-ot-level-2">OT Level 2 (SCADA/HMI)</span>
+      <span class="purdue-arrow">→</span>
+      <span class="purdue-level zone-ot-level-1">OT Level 1 (Controllers)</span>
+      <span class="purdue-arrow">→</span>
+      <span class="purdue-level zone-field-device">Field Device (PLC/RTU)</span>
     </div>
+  </div>
 
-```
-<div>
-    <h3>IOC Type Distribution</h3>
-    <canvas id="typeChart" width="300" height="300"></canvas>
-</div>
-```
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Total IOCs</div>
+      <div class="value">{{ total_iocs }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Malware</div>
+      <div class="value" style="color:#ff7b72">{{ tag_counts.Malware }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Suspicious</div>
+      <div class="value" style="color:#e3b341">{{ tag_counts.Suspicious }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">C2</div>
+      <div class="value" style="color:#bc8cff">{{ tag_counts.C2 }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Benign</div>
+      <div class="value" style="color:#56d364">{{ tag_counts.Benign }}</div>
+    </div>
+  </div>
 
-</div>
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>IOC Type Distribution</h3>
+      <canvas id="typeChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Tag Distribution</h3>
+      <canvas id="tagChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>IOCs by Network Zone</h3>
+      <canvas id="zoneChart"></canvas>
+    </div>
+  </div>
 
-<!-- TABLE -->
+  <!-- Filters -->
+  <form method="GET" action="/">
+    <div class="filters">
+      <div>
+        <label>Search IOC Value</label>
+        <input type="text" name="search" value="{{ search }}" placeholder="e.g. 192.168.1.1">
+      </div>
+      <div>
+        <label>Type</label>
+        <select name="type">
+          <option value="">All Types</option>
+          {% for t in ["IP","Domain","URL","Hash"] %}
+          <option value="{{ t }}" {% if filter_type == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Tag</label>
+        <select name="tag">
+          <option value="">All Tags</option>
+          {% for t in ["Malware","Suspicious","C2","Benign"] %}
+          <option value="{{ t }}" {% if filter_tag == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Network Zone</label>
+        <select name="zone">
+          <option value="">All Zones</option>
+          {% for z in network_zones %}
+          <option value="{{ z }}" {% if filter_zone == z %}selected{% endif %}>{{ z }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Source</label>
+        <input type="text" name="source" value="{{ filter_source }}" placeholder="e.g. VT">
+      </div>
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a href="/" class="btn btn-secondary">Reset</a>
+    </div>
+  </form>
 
-<table>
-<tr>
-    <th>ID</th>
-    <th>IOC Value</th>
-    <th>Type</th>
-    <th>Tag</th>
-    <th>Source</th>
-    <th>Timestamp</th>
-    <th>VT Status</th>
-    <th>VT Stats</th>
-    <th>AbuseIPDB</th>
-    <th>Action</th>
-</tr>
+  <!-- Add IOC -->
+  <div class="add-form">
+    <h3>➕ Add IOC</h3>
+    <form method="POST" action="/add_ioc">
+      <div class="form-row">
+        <div class="form-group">
+          <label>IOC Value *</label>
+          <input type="text" name="value" placeholder="IP / Domain / URL / Hash" required>
+        </div>
+        <div class="form-group">
+          <label>Type *</label>
+          <select name="type" required>
+            <option value="IP">IP</option>
+            <option value="Domain">Domain</option>
+            <option value="URL">URL</option>
+            <option value="Hash">Hash</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tag *</label>
+          <select name="tag" required>
+            <option value="Suspicious">Suspicious</option>
+            <option value="Malware">Malware</option>
+            <option value="C2">C2</option>
+            <option value="Benign">Benign</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Network Zone *</label>
+          <select name="network_zone" required>
+            {% for z in network_zones %}
+            <option value="{{ z }}">{{ z }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Source *</label>
+          <input type="text" name="source" placeholder="e.g. Manual, CISA" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-end">Add &amp; Enrich</button>
+      </div>
+    </form>
+  </div>
 
-{% for ioc in iocs %}
+  <!-- Bulk Upload -->
+  <div class="bulk-section">
+    <label>📤 Bulk CSV Upload</label>
+    <form method="POST" action="/bulk_upload" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center">
+      <input type="file" name="file" accept=".csv">
+      <button type="submit" class="btn btn-secondary">Upload</button>
+    </form>
+    <span style="font-size:0.73rem;color:#8b949e">CSV columns: value, type, tag, source, <strong style="color:#ffa657">network_zone</strong></span>
+  </div>
 
-<tr>
-<td>{{ ioc.id }}</td>
-<td>{{ ioc.value }}</td>
-<td>{{ ioc.type }}</td>
-<td>{{ ioc.tag }}</td>
-<td>{{ ioc.source }}</td>
-<td>{{ ioc.timestamp }}</td>
-<td>{{ ioc.vt_status or "Not enriched" }}</td>
+  <!-- IOC Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>IOC Value</th>
+          <th>Type</th>
+          <th>Tag</th>
+          <th>Network Zone</th>
+          <th>Source</th>
+          <th>VT Enrichment</th>
+          <th>AbuseIPDB</th>
+          <th>Timestamp</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if iocs %}
+          {% for ioc in iocs %}
+          <tr>
+            <td style="color:#8b949e">{{ ioc.id }}</td>
+            <td><div class="ioc-value">{{ ioc.value }}</div></td>
+            <td><span class="badge" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d">{{ ioc.type }}</span></td>
+            <td>
+              {% set tag_lower = ioc.tag | lower %}
+              <span class="badge badge-{{ tag_lower }}">{{ ioc.tag }}</span>
+            </td>
 
-<td>
-Malicious: {{ ioc.vt_malicious or "-" }}<br>
-Suspicious: {{ ioc.vt_suspicious or "-" }}<br>
-Harmless: {{ ioc.vt_harmless or "-" }}<br>
-Undetected: {{ ioc.vt_undetected or "-" }}<br>
-Last: {{ ioc.vt_last_analysis_date or "-" }}
-</td>
+            <!-- Network Zone with Purdue colour coding -->
+            <td>
+              {% set zone = ioc.network_zone or 'Corporate IT' %}
+              {% if zone == 'Corporate IT' %}
+                <span class="zone-badge zone-corporate-it">{{ zone }}</span>
+              {% elif zone == 'DMZ' %}
+                <span class="zone-badge zone-dmz">{{ zone }}</span>
+              {% elif zone == 'OT Level 2' %}
+                <span class="zone-badge zone-ot-level-2">{{ zone }}</span>
+              {% elif zone == 'OT Level 1' %}
+                <span class="zone-badge zone-ot-level-1">{{ zone }}</span>
+              {% elif zone == 'Field Device' %}
+                <span class="zone-badge zone-field-device">⚠ {{ zone }}</span>
+              {% else %}
+                <span class="zone-badge zone-corporate-it">{{ zone }}</span>
+              {% endif %}
+            </td>
 
-<td>
-Status: {{ ioc.abuse_status or "Not enriched" }}<br>
-Score: {{ ioc.abuse_confidence_score or "-" }}<br>
-Country: {{ ioc.abuse_country or "-" }}<br>
-ISP: {{ ioc.abuse_isp or "-" }}
-</td>
+            <td style="color:#8b949e;font-size:0.78rem">{{ ioc.source }}</td>
 
-<td>
-<form method="POST" action="/enrich_vt/{{ ioc.id }}">
-<button class="small-btn">Recheck VT</button>
-</form>
+            <!-- VT Enrichment -->
+            <td>
+              {% if ioc.vt_status == 'Enriched' %}
+                <div class="score-row">
+                  <span class="score-pill {% if ioc.vt_malicious > 0 %}red{% endif %}">M:{{ ioc.vt_malicious }}</span>
+                  <span class="score-pill {% if ioc.vt_suspicious > 0 %}yellow{% endif %}">S:{{ ioc.vt_suspicious }}</span>
+                  <span class="score-pill green">H:{{ ioc.vt_harmless }}</span>
+                </div>
+              {% elif ioc.vt_status %}
+                <span style="color:#8b949e;font-size:0.75rem">{{ ioc.vt_status }}</span>
+              {% else %}
+                <span style="color:#8b949e;font-size:0.75rem">—</span>
+              {% endif %}
+            </td>
 
-<form method="POST" action="/enrich_abuse/{{ ioc.id }}">
-<button class="small-btn">Recheck AbuseIPDB</button>
-</form>
+            <!-- AbuseIPDB -->
+            <td>
+              {% if ioc.abuse_status == 'Enriched' %}
+                <div class="score-row">
+                  <span class="score-pill {% if ioc.abuse_confidence_score > 50 %}red{% elif ioc.abuse_confidence_score > 10 %}yellow{% else %}green{% endif %}">
+                    {{ ioc.abuse_confidence_score }}%
+                  </span>
+                  {% if ioc.abuse_country %}<span class="score-pill">{{ ioc.abuse_country }}</span>{% endif %}
+                </div>
+              {% elif ioc.abuse_status %}
+                <span style="color:#8b949e;font-size:0.75rem">{{ ioc.abuse_status }}</span>
+              {% else %}
+                <span style="color:#8b949e;font-size:0.75rem">—</span>
+              {% endif %}
+            </td>
 
-<a href="/edit_ioc/{{ ioc.id }}"><button class="small-btn">Edit</button></a>
+            <td style="color:#8b949e;font-size:0.75rem;white-space:nowrap">{{ ioc.timestamp }}</td>
 
-<form method="POST" action="/delete_ioc/{{ ioc.id }}">
-<button class="small-btn" style="background:red;">Delete</button>
-</form>
-</td>
-</tr>
-{% endfor %}
-</table>
+            <!-- Actions -->
+            <td>
+              <div class="actions">
+                <form method="POST" action="/enrich_vt/{{ ioc.id }}">
+                  <button class="btn btn-sm btn-info">VT</button>
+                </form>
+                {% if ioc.type == 'IP' %}
+                <form method="POST" action="/enrich_abuse/{{ ioc.id }}">
+                  <button class="btn btn-sm" style="background:#6e40c9;color:#fff">Abuse</button>
+                </form>
+                {% endif %}
+                <a href="/edit_ioc/{{ ioc.id }}" class="btn btn-sm btn-secondary">Edit</a>
+                <form method="POST" action="/delete_ioc/{{ ioc.id }}" onsubmit="return confirm('Delete this IOC?')">
+                  <button class="btn btn-sm btn-danger">Del</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="10" style="text-align:center;color:#8b949e;padding:32px">No IOCs found. Add one above or upload a CSV.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
 
-<!-- CHART SCRIPT -->
+</div><!-- /container -->
 
 <script>
-new Chart(document.getElementById("tagChart"), {
-    type: "pie",
-    data: {
-        labels: ["Malware", "Suspicious", "C2", "Benign"],
-        datasets: [{
-            data: [
-                {{ tag_counts['Malware'] }},
-                {{ tag_counts['Suspicious'] }},
-                {{ tag_counts['C2'] }},
-                {{ tag_counts['Benign'] }}
-            ]
-        }]
-    }
-});
+  // ── Chart defaults ──
+  Chart.defaults.color = '#8b949e';
+  Chart.defaults.borderColor = '#21262d';
 
-new Chart(document.getElementById("typeChart"), {
-    type: "bar",
+  const chartOpts = {
+    responsive: true,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } } }
+  };
+
+  // Type Chart
+  new Chart(document.getElementById('typeChart'), {
+    type: 'doughnut',
     data: {
-        labels: ["IP", "Domain", "URL", "Hash"],
-        datasets: [{
-            data: [
-                {{ type_counts['IP'] }},
-                {{ type_counts['Domain'] }},
-                {{ type_counts['URL'] }},
-                {{ type_counts['Hash'] }}
-            ]
-        }]
+      labels: ['IP','Domain','URL','Hash'],
+      datasets: [{
+        data: [
+          {{ type_counts.IP }}, {{ type_counts.Domain }},
+          {{ type_counts.URL }}, {{ type_counts.Hash }}
+        ],
+        backgroundColor: ['#1f6feb','#6e40c9','#9e6a03','#238636'],
+        borderWidth: 0
+      }]
+    },
+    options: chartOpts
+  });
+
+  // Tag Chart
+  new Chart(document.getElementById('tagChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Malware','Suspicious','C2','Benign'],
+      datasets: [{
+        data: [
+          {{ tag_counts.Malware }}, {{ tag_counts.Suspicious }},
+          {{ tag_counts.C2 }}, {{ tag_counts.Benign }}
+        ],
+        backgroundColor: ['#da3633','#9e6a03','#6e40c9','#238636'],
+        borderWidth: 0
+      }]
+    },
+    options: chartOpts
+  });
+
+  // Zone Chart — horizontal bar, colour-coded by Purdue level
+  new Chart(document.getElementById('zoneChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Corporate IT','DMZ','OT Level 2','OT Level 1','Field Device'],
+      datasets: [{
+        label: 'IOC Count',
+        data: [
+          {{ zone_counts['Corporate IT'] }},
+          {{ zone_counts['DMZ'] }},
+          {{ zone_counts['OT Level 2'] }},
+          {{ zone_counts['OT Level 1'] }},
+          {{ zone_counts['Field Device'] }}
+        ],
+        backgroundColor: ['#1f6feb','#9e6a03','#d1640a','#c7401f','#da3633'],
+        borderRadius: 4,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#21262d' }, ticks: { stepSize: 1 } },
+        y: { grid: { display: false } }
+      }
     }
-});
+  });
 </script>
 
 </body>

@@ -1,6 +1,11 @@
-value,type,tag,source
-1.1.1.1,IP,Suspicious,Manual
-8.8.8.8,IP,Suspicious,Manual
-example.com,Domain,Suspicious,Manual
-http://example.com/,URL,Suspicious,Manual
-44d88612fea8a8f36de82e1278abb02f,Hash,Malware,Manual
+value,type,tag,source,network_zone
+8.8.8.8,IP,Benign,Manual,Corporate IT
+1.1.1.1,IP,Benign,Manual,DMZ
+45.33.32.156,IP,Suspicious,AbuseIPDB,OT Level 2
+185.220.101.45,IP,C2,Manual,OT Level 1
+evil-malware.ru,Domain,Malware,CISA,Field Device
+update-service.com,Domain,Suspicious,Manual,DMZ
+44d88612fea8a8f36de82e1278abb02f,Hash,Malware,VT,OT Level 2
+https://malicious-site.com/payload,URL,Malware,Manual,Corporate IT
+192.168.10.55,IP,Suspicious,Manual,OT Level 1
+10.0.0.254,IP,Benign,Manual,Field Device

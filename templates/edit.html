@@ -1,48 +1,270 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Edit IOC</title>
     <style>
-        body {
-            font-family: Arial;
-            background: #111;
-            color: white;
-            padding: 30px;
+        * {
+            box-sizing: border-box;
         }
-        input, select, button {
-            padding: 10px;
-            margin: 10px;
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: #0f172a;
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+        }
+
+        .nav-right a {
+            color: white;
+            text-decoration: none;
+            background: #2563eb;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+            padding: 24px;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: #111827;
+        }
+
+        .flash {
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 5px solid transparent;
+            font-size: 14px;
+        }
+
+        .flash.success {
+            background: #eafaf0;
+            color: #166534;
+            border-left-color: #22c55e;
+        }
+
+        .flash.danger {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-left-color: #ef4444;
+        }
+
+        .flash.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-left-color: #3b82f6;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .helper-text {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .validation-box {
+            margin: 18px 0;
+            padding: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-light {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-light:hover {
+            background: #d1d5db;
+        }
+
+        .meta-box {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: #475569;
         }
     </style>
 </head>
 <body>
+    <div class="navbar">
+        <h1>Edit IOC</h1>
+        <div class="nav-right">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
 
-<h2>Edit IOC</h2>
+    <div class="container">
+        <div class="card">
+            <h2>Update IOC Record</h2>
 
-<form method="POST">
-    <input type="text" name="value" value="{{ ioc.value }}" required>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    <select name="type">
-        <option value="IP" {% if ioc.type=="IP" %}selected{% endif %}>IP</option>
-        <option value="Domain" {% if ioc.type=="Domain" %}selected{% endif %}>Domain</option>
-        <option value="Hash" {% if ioc.type=="Hash" %}selected{% endif %}>Hash</option>
-        <option value="URL" {% if ioc.type=="URL" %}selected{% endif %}>URL</option>
-    </select>
+            <div class="meta-box">
+                Editing IOC ID: <strong>{{ ioc.id }}</strong><br>
+                Original timestamp: <strong>{{ ioc.timestamp }}</strong>
+            </div>
 
-    <select name="tag">
-        <option value="Malware" {% if ioc.tag=="Malware" %}selected{% endif %}>Malware</option>
-        <option value="Phishing" {% if ioc.tag=="Phishing" %}selected{% endif %}>Phishing</option>
-        <option value="C2" {% if ioc.tag=="C2" %}selected{% endif %}>C2</option>
-        <option value="Suspicious" {% if ioc.tag=="Suspicious" %}selected{% endif %}>Suspicious</option>
-        <option value="Benign" {% if ioc.tag=="Benign" %}selected{% endif %}>Benign</option>
-    </select>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="value">IOC Value</label>
+                    <input type="text" id="value" name="value" value="{{ ioc.value }}" required>
+                    <div class="helper-text">Use a valid value matching the selected IOC type.</div>
+                </div>
 
-    <input type="text" name="source" value="{{ ioc.source }}" required>
+                <div class="form-group">
+                    <label for="type">IOC Type</label>
+                    <select id="type" name="type" required>
+                        <option value="IP" {% if ioc.type == 'IP' %}selected{% endif %}>IP</option>
+                        <option value="Domain" {% if ioc.type == 'Domain' %}selected{% endif %}>Domain</option>
+                        <option value="URL" {% if ioc.type == 'URL' %}selected{% endif %}>URL</option>
+                        <option value="Hash" {% if ioc.type == 'Hash' %}selected{% endif %}>Hash</option>
+                    </select>
+                </div>
 
-    <button type="submit">Update IOC</button>
-</form>
+                <div class="form-group">
+                    <label for="tag">Tag</label>
+                    <select id="tag" name="tag" required>
+                        <option value="Malware" {% if ioc.tag == 'Malware' %}selected{% endif %}>Malware</option>
+                        <option value="Suspicious" {% if ioc.tag == 'Suspicious' %}selected{% endif %}>Suspicious</option>
+                        <option value="C2" {% if ioc.tag == 'C2' %}selected{% endif %}>C2</option>
+                        <option value="Benign" {% if ioc.tag == 'Benign' %}selected{% endif %}>Benign</option>
+                    </select>
+                </div>
 
-<a href="/" style="color: yellow;">Back to Dashboard</a>
+                <div class="form-group">
+                    <label for="source">Source</label>
+                    <input type="text" id="source" name="source" value="{{ ioc.source }}" required>
+                </div>
 
+                <div class="form-group">
+                    <label for="network_zone">Network Zone</label>
+                    <select id="network_zone" name="network_zone" required>
+                        {% for zone in network_zones %}
+                            <option value="{{ zone }}" {% if ioc.network_zone == zone %}selected{% endif %}>{{ zone }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="validation-box">
+                    <strong>Validation reminder:</strong><br>
+                    IP = valid IPv4 only<br>
+                    URL = must begin with http:// or https://<br>
+                    Hash = MD5, SHA1, or SHA256<br>
+                    Domain = properly formatted domain name
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
