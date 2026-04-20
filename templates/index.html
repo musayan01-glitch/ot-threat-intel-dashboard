@@ -72,7 +72,7 @@
 
         .container {
             width: 92%;
-            max-width: 1600px;
+            max-width: 1700px;
             margin: 26px auto;
         }
 
@@ -321,7 +321,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1180px;
+            min-width: 1650px;
         }
 
         th, td {
@@ -351,6 +351,7 @@
             border-radius: 999px;
             font-size: 12px;
             font-weight: 800;
+            white-space: nowrap;
         }
 
         .tag-malware {
@@ -374,6 +375,21 @@
         }
 
         .tag-advisory {
+            background: #1e3a8a;
+            color: #bfdbfe;
+        }
+
+        .tag-confidence-high {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .tag-confidence-medium {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        .tag-confidence-low {
             background: #1e3a8a;
             color: #bfdbfe;
         }
@@ -442,6 +458,34 @@
             line-height: 1.6;
             color: #e5e7eb;
             font-size: 14px;
+        }
+
+        .mitre-cell {
+            min-width: 220px;
+        }
+
+        .mitre-id {
+            font-weight: 800;
+            color: #93c5fd;
+        }
+
+        .mitre-name {
+            font-weight: 700;
+            color: #f8fafc;
+            margin-top: 2px;
+        }
+
+        .mitre-tactic {
+            margin-top: 4px;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .mitre-reason {
+            max-width: 320px;
+            color: #e5e7eb;
+            line-height: 1.5;
+            font-size: 13px;
         }
 
         .footer-note {
@@ -752,6 +796,10 @@
                                 <th>Timestamp</th>
                                 <th>VT Status</th>
                                 <th>AbuseIPDB Status</th>
+                                <th>MITRE ICS</th>
+                                <th>Tactic</th>
+                                <th>Confidence</th>
+                                <th>Reason</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -779,6 +827,42 @@
                                     <td>{{ ioc.timestamp }}</td>
                                     <td>{{ ioc.vt_status or "N/A" }}</td>
                                     <td>{{ ioc.abuse_status or "N/A" }}</td>
+
+                                    <td class="mitre-cell">
+                                        {% if ioc.mitre_ics_technique_id %}
+                                            <div class="mitre-id">{{ ioc.mitre_ics_technique_id }}</div>
+                                            <div class="mitre-name">{{ ioc.mitre_ics_technique_name }}</div>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if ioc.mitre_ics_tactic %}
+                                            {{ ioc.mitre_ics_tactic }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if ioc.mitre_ics_confidence %}
+                                            {% if ioc.mitre_ics_confidence == "High" %}
+                                                <span class="tag tag-confidence-high">High</span>
+                                            {% elif ioc.mitre_ics_confidence == "Medium" %}
+                                                <span class="tag tag-confidence-medium">Medium</span>
+                                            {% else %}
+                                                <span class="tag tag-confidence-low">{{ ioc.mitre_ics_confidence }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="mitre-reason">
+                                        {{ ioc.mitre_ics_reason or "N/A" }}
+                                    </td>
+
                                     <td>
                                         <div class="small-actions">
                                             <a href="{{ url_for('edit_ioc', ioc_id=ioc.id) }}" class="btn btn-secondary">Edit</a>
